@@ -97,13 +97,9 @@ function reject($items, $func)
 
 function remove($items, $func)
 {
-    $keys = array_keys(array_filter($items, $func));
+    $filtered = array_filter($items, $func);
 
-    foreach ($keys as $key) {
-        unset($items[$key]);
-    }
-
-    return $items;
+    return array_diff_key($items, $filtered);
 }
 
 function take($items, $n = 1)
@@ -118,7 +114,7 @@ function without($items, ...$params)
 
 function hasDuplicates($items)
 {
-    return count($items) !== count(array_unique($items));
+    return count($items) > count(array_unique($items));
 }
 
 function groupBy($items, $func)
@@ -156,8 +152,8 @@ function fibonacci($n)
 {
     $sequence = [0, 1];
 
-    for ($i = 0; $i < $n - 2; $i++) {
-        array_push($sequence, array_sum(array_slice($sequence, -2, 2, true)));
+    for ($i = 2; $i < $n; $i++) {
+        $sequence[$i] = $sequence[$i-1] + $sequence[$i-2];
     }
 
     return $sequence;
@@ -216,19 +212,17 @@ function endsWith($haystack, $needle)
 
 function startsWith($haystack, $needle)
 {
-     return substr($haystack, 0, strlen($needle)) === $needle;
+     return 0 === strpos($haystack, $needle);
 }
 
 function isLowerCase($string)
 {
-    $char = mb_substr($string, 0, 1, "UTF-8");
-    return mb_strtolower($char, "UTF-8") === $char;
+    return $string === strtolower($string);
 }
 
 function isUpperCase($string)
 {
-    $char = mb_substr($string, 0, 1, "UTF-8");
-    return mb_strtolower($char, "UTF-8") !== $char;
+    return $string === strtoupper($string);
 }
 
 function isAnagram($string1, $string2)
@@ -239,4 +233,139 @@ function isAnagram($string1, $string2)
 function palindrome($string)
 {
     return strrev($string) === $string;
+}
+
+function firstStringBetween($haystack, $start, $end)
+{
+    $char = strpos($haystack, $start);
+    if ($char === false) {
+        return '';
+    }
+
+    $char += strlen($start);
+    $len = strpos($haystack, $end, $char) - $char;
+
+    return substr($haystack, $char, $len);
+}
+
+function compose(...$functions)
+{
+    return array_reduce(
+        $functions,
+        function ($carry, $function) {
+            return function ($x) use ($carry, $function) {
+                return $function($carry($x));
+            };
+        },
+        function ($x) {
+            return $x;
+        }
+    );
+}
+
+function maxN($numbers)
+{
+    $maxValue = max($numbers);
+    $maxValueArray = array_filter($numbers, function ($value) use ($maxValue) {
+        return $maxValue === $value;
+    });
+
+    return count($maxValueArray);
+}
+
+function minN($numbers)
+{
+    $minValue = min($numbers);
+    $minValueArray = array_filter($numbers, function ($value) use ($minValue) {
+        return $minValue === $value;
+    });
+
+    return count($minValueArray);
+}
+
+function countVowels($string)
+{
+    preg_match_all('/[aeiou]/i', $string, $matches);
+
+    return count($matches[0]);
+}
+
+function decapitalize($string, $upperRest = false)
+{
+    return strtolower(substr($string, 0, 1)) . ($upperRest ? strtoupper(substr($string, 1)) : substr($string, 1));
+}
+
+function approximatelyEqual($number1, $number2, $epsilon = 0.001)
+{
+    return abs($number1 - $number2) < $epsilon;
+}
+
+function clampNumber($num, $a, $b)
+{
+    return max(min($num, max($a, $b)), min($a, $b));
+}
+
+function orderBy($items, $attr, $order)
+{
+    $sortedItems = [];
+    foreach ($items as $item) {
+        $key = is_object($item) ? $item->{$attr} : $item[$attr];
+        $sortedItems[$key] = $item;
+    }
+    if ($order === 'desc') {
+        krsort($sortedItems);
+    } else {
+        ksort($sortedItems);
+    }
+
+    return array_values($sortedItems);
+}
+
+function memoize($func)
+{
+    return function () use ($func) {
+        static $cache = [];
+
+        $args = func_get_args();
+        $key = serialize($args);
+        $cached = true;
+
+        if (!isset($cache[$key])) {
+            $cache[$key] = call_user_func_array($func, $args);
+            $cached = false;
+        }
+
+        return ['result' => $cache[$key], 'cached' => $cached];
+    };
+}
+
+function curry($function)
+{
+    $accumulator = function ($arguments) use ($function, &$accumulator) {
+        return function (...$args) use ($function, $arguments, $accumulator) {
+            $arguments = array_merge($arguments, $args);
+            $reflection = new ReflectionFunction($function);
+            $totalArguments = $reflection->getNumberOfRequiredParameters();
+
+            if ($totalArguments <= count($arguments)) {
+                return call_user_func_array($function, $arguments);
+            }
+
+            return $accumulator($arguments);
+        };
+    };
+
+    return $accumulator([]);
+}
+
+function once($function)
+{
+    return function (...$args) use ($function) {
+        static $called = false;
+        if ($called) {
+            return;
+        }
+        $called = true;
+        return call_user_func_array($function, $args);
+    };
 }

@@ -4,9 +4,6 @@ use PHPUnit\Framework\TestCase;
 
 class StringTest extends TestCase
 {
-    /**
-     * @test
-     */
     public function testEndsWith()
     {
         $this->assertTrue(
@@ -14,9 +11,6 @@ class StringTest extends TestCase
         );
     }
 
-    /**
-     * @test
-     */
     public function testStartsWith()
     {
         $this->assertTrue(
@@ -24,29 +18,20 @@ class StringTest extends TestCase
         );
     }
 
-    /**
-     * @test
-     */
     public function testIsUpperCase()
     {
         $this->assertTrue(
-            isUpperCase('Morning shows the day!')
+            isUpperCase('MORNING SHOWS THE DAY!')
         );
     }
 
-    /**
-     * @test
-     */
     public function testIsLowerCase()
     {
         $this->assertTrue(
-            isLowerCase('hello')
+            isLowerCase('morning shows the day!')
         );
     }
 
-    /**
-     * @test
-     */
     public function testIsAnagram()
     {
         $this->assertTrue(
@@ -54,13 +39,37 @@ class StringTest extends TestCase
         );
     }
 
-    /**
-     * @test
-     */
     public function testPalindrome()
     {
         $this->assertTrue(
             palindrome('racecar')
         );
+    }
+
+    public function testFirstStringBetween()
+    {
+        $this->assertSame(
+            'custom',
+            firstStringBetween('This is a [custom] string', '[', ']')
+        );
+
+        $this->assertSame(
+            '',
+            firstStringBetween('', '[', ']')
+        );
+    }
+
+    public function testCountVowels()
+    {
+        $this->assertSame(4, countVowels('sampleInput'));
+
+        $this->assertSame(0, countVowels(''));
+    }
+
+    public function testDecapitalize()
+    {
+        $this->assertSame('fooBar', decapitalize('FooBar'));
+
+        $this->assertSame('fOOBAR', decapitalize('FooBar', true));
     }
 }

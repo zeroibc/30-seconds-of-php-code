@@ -3,6 +3,8 @@
 # 30 seconds of php code
 > A curated collection of useful PHP snippets that you can understand in 30 seconds or less.
 
+Note: This project is inspired by [30 Seconds of Code](https://github.com/Chalarangelo/30-seconds-of-code), but there is no affiliation with that project.
+
 ## Table of Contents
 
 ### 📚 Array
@@ -29,6 +31,7 @@
 * [`tail`](#tail)
 * [`take`](#take)
 * [`without`](#without)
+* [`orderBy`](#orderby)
 
 </details>
 
@@ -45,6 +48,10 @@
 * [`isPrime`](#isprime)
 * [`lcm`](#lcm)
 * [`median`](#median)
+* [`maxN`](#maxn)
+* [`minN`](#minn)
+* [`approximatelyEqual`](#approximatelyequal)
+* [`clampNumber`](#clampnumber)
 
 </details>
 
@@ -54,11 +61,26 @@
 <summary>View contents</summary>
 
 * [`endsWith`](#endswith)
+* [`firstStringBetween`](#firststringbetween)
 * [`isAnagram`](#isanagram)
 * [`isLowerCase`](#islowercase)
 * [`isUpperCase`](#isuppercase)
 * [`palindrome`](#palindrome)
 * [`startsWith`](#startswith)
+* [`countVowels`](#countvowels)
+* [`decapitalize`](#decapitalize)
+
+</details>
+
+### 🎛️ Function
+
+<details>
+<summary>View contents</summary>
+
+* [`compose`](#compose)
+* [`memoize`](#memoize)
+* [`curry`](#curry)
+* [`once`](#once)
 
 </details>
 
@@ -305,7 +327,7 @@ Checks a flat list for duplicate values. Returns `true` if duplicate values exis
 ```php
 function hasDuplicates($items)
 {
-    return count($items) !== count(array_unique($items));
+    return count($items) > count(array_unique($items));
 }
 ```
 
@@ -441,13 +463,9 @@ Removes elements from an array for which the given function returns false.
 ```php
 function remove($items, $func)
 {
-    $keys = array_keys(array_filter($items, $func));
+    $filtered = array_filter($items, $func);
 
-    foreach ($keys as $key) {
-        unset($items[$key]);
-    }
-
-    return $items;
+    return array_diff_key($items, $filtered);
 }
 ```
 
@@ -529,6 +547,47 @@ without([2, 1, 2, 3], 1, 2); // [3]
 
 <br>[⬆ Back to top](#table-of-contents)
 
+### orderBy
+
+Sorts a collection of arrays or objects by key.
+
+```php
+function orderBy($items, $attr, $order)
+{
+    $sortedItems = [];
+    foreach ($items as $item) {
+        $key = is_object($item) ? $item->{$attr} : $item[$attr];
+        $sortedItems[$key] = $item;
+    }
+    if ($order === 'desc') {
+        krsort($sortedItems);
+    } else {
+        ksort($sortedItems);
+    }
+
+    return array_values($sortedItems);
+}
+```
+
+<details>
+<summary>Examples</summary>
+
+```php
+orderBy(
+    [
+        ['id' => 2, 'name' => 'Joy'],
+        ['id' => 3, 'name' => 'Khaja'],
+        ['id' => 1, 'name' => 'Raja']
+    ],
+    'id',
+    'desc'
+); // [['id' => 3, 'name' => 'Khaja'], ['id' => 2, 'name' => 'Joy'], ['id' => 1, 'name' => 'Raja']]
+```
+
+</details>
+
+<br>[⬆ Back to top](#table-of-contents)
+
 
 ---
  ## ➗ Math
@@ -587,8 +646,8 @@ function fibonacci($n)
 {
     $sequence = [0, 1];
 
-    for ($i = 0; $i < $n - 2; $i++) {
-        array_push($sequence, array_sum(array_slice($sequence, -2, 2, true)));
+    for ($i = 2; $i < $n; $i++) {
+        $sequence[$i] = $sequence[$i-1] + $sequence[$i-2];
     }
 
     return $sequence;
@@ -735,6 +794,111 @@ median([1, 2, 3, 6, 7, 9]); // 4.5
 
 <br>[⬆ Back to top](#table-of-contents)
 
+### maxN
+Returns the n maximum elements from the provided array.
+
+```php
+function maxN($numbers)
+{
+    $maxValue = max($numbers);
+    $maxValueArray = array_filter($numbers, function ($value) use ($maxValue) {
+        return $maxValue === $value;
+    });
+
+    return count($maxValueArray);
+}
+```
+
+<details>
+<summary>Examples</summary>
+
+```php
+maxN([1, 2, 3, 4, 5, 5]); // 2
+maxN([1, 2, 3, 4, 5]); // 1
+```
+
+</details>
+
+<br>[⬆ Back to top](#table-of-contents)
+
+### minN
+Returns the n minimum elements from the provided array.
+
+```php
+function minN($numbers)
+{
+    $minValue = min($numbers);
+    $minValueArray = array_filter($numbers, function ($value) use ($minValue) {
+        return $minValue === $value;
+    });
+
+    return count($minValueArray);
+}
+```
+
+<details>
+<summary>Examples</summary>
+
+```php
+maxN([1, 1, 2, 3, 4, 5, 5]); // 2
+maxN([1, 2, 3, 4, 5]); // 1
+```
+
+</details>
+
+<br>[⬆ Back to top](#table-of-contents)
+
+### approximatelyEqual
+
+Checks if two numbers are approximately equal to each other.
+
+Use abs() to compare the absolute difference of the two values to epsilon. Omit the third parameter, epsilon, to use a default value of 0.001.
+
+```php
+function approximatelyEqual($number1, $number2, $epsilon = 0.001)
+{
+    return abs($number1 - $number2) < $epsilon;
+}
+```
+
+<details>
+<summary>Examples</summary>
+
+```php
+approximatelyEqual(10.0, 10.00001); // true
+
+approximatelyEqual(10.0, 10.01); // false
+```
+
+</details>
+
+<br>[⬆ Back to top](#table-of-contents)
+
+### clampNumber
+
+Clamps num within the inclusive range specified by the boundary values a and b.
+
+If num falls within the range, return num. Otherwise, return the nearest number in the range.
+
+```php
+function clampNumber($num, $a, $b)
+{
+    return max(min($num, max($a, $b)), min($a, $b));
+}
+```
+
+<details>
+<summary>Examples</summary>
+
+```php
+clampNumber(2, 3, 5); // 3
+clampNumber(1, -1, -5); // -1
+```
+
+</details>
+
+<br>[⬆ Back to top](#table-of-contents)
+
 
 ---
  ## 📜 String
@@ -755,6 +919,36 @@ function endsWith($haystack, $needle)
 
 ```php
 endsWith('Hi, this is me', 'me'); // true
+```
+
+</details>
+
+<br>[⬆ Back to top](#table-of-contents)
+
+### firstStringBetween
+
+Returns the first string there is between the strings from the parameter start and end.
+
+```php
+function firstStringBetween($haystack, $start, $end)
+{
+    $char = strpos($haystack, $start);
+    if ($char === false) {
+        return '';
+    }
+
+    $char += strlen($start);
+    $len = strpos($haystack, $end, $char) - $char;
+
+    return substr($haystack, $char, $len);
+}
+```
+
+<details>
+<summary>Examples</summary>
+
+```php
+firstStringBetween('This is a [custom] string', '[', ']'); // custom
 ```
 
 </details>
@@ -790,8 +984,7 @@ Returns `true` if the given string is lower case, `false` otherwise.
 ```php
 function isLowerCase($string)
 {
-    $char = mb_substr($string, 0, 1, "UTF-8");
-    return mb_strtolower($char, "UTF-8") === $char;
+    return $string === strtolower($string);
 }
 ```
 
@@ -814,8 +1007,7 @@ Returns `true` if the given string is upper case, false otherwise.
 ```php
 function isUpperCase($string)
 {
-    $char = mb_substr($string, 0, 1, "UTF-8");
-    return mb_strtolower($char, "UTF-8") !== $char;
+    return $string === strtoupper($string);
 }
 ```
 
@@ -823,7 +1015,7 @@ function isUpperCase($string)
 <summary>Examples</summary>
 
 ```php
-isUpperCase('Morning Shows The Day!'); // true
+isUpperCase('MORNING SHOWS THE DAY!'); // true
 isUpperCase('qUick Fox'); // false
 ```
 
@@ -875,10 +1067,223 @@ startsWith('Hi, this is me', 'Hi'); // true
 
 <br>[⬆ Back to top](#table-of-contents)
 
-### Related
+### countVowels
 
-- [30 Seconds of Code](https://github.com/Chalarangelo/30-seconds-of-code)
-- [30 Seconds of Python](https://github.com/kriadmin/30-seconds-of-python-code)
+Retuns number of vowels in provided string.
+
+Use a regular expression to count the number of vowels (A, E, I, O, U) in a string.
+
+```php
+function countVowels($string)
+{
+    preg_match_all('/[aeiou]/i', $string, $matches);
+
+    return count($matches[0]);
+}
+```
+
+<details>
+<summary>Examples</summary>
+
+```php
+countVowels('sampleInput'); // 4
+```
+
+</details>
+
+<br>[⬆ Back to top](#table-of-contents)
+
+### decapitalize
+
+Decapitalizes the first letter of a string.
+
+Decapitalizes the first letter of the sring and then adds it with rest of the string. Omit the ```upperRest``` parameter to keep the rest of the string intact, or set it to ```true``` to convert to uppercase.
+
+```php
+function decapitalize($string, $upperRest = false)
+{
+    return strtolower(substr($string, 0, 1)) . ($upperRest ? strtoupper(substr($string, 1)) : substr($string, 1));
+}
+```
+
+<details>
+<summary>Examples</summary>
+
+```php
+decapitalize('FooBar'); // 'fooBar'
+```
+
+</details>
+
+<br>[⬆ Back to top](#table-of-contents)
+
+
+---
+ ## 🎛️ Function
+
+### compose
+
+Return a new function that composes multiple functions into a single callable.
+
+```php
+function compose(...$functions)
+{
+    return array_reduce(
+        $functions,
+        function ($carry, $function) {
+            return function ($x) use ($carry, $function) {
+                return $function($carry($x));
+            };
+        },
+        function ($x) {
+            return $x;
+        }
+    );
+}
+```
+
+<details>
+<summary>Examples</summary>
+
+```php
+$compose = compose(
+    // add 2
+    function ($x) {
+        return $x + 2;
+    },
+    // multiply 4
+    function ($x) {
+        return $x * 4;
+    }
+);
+$compose(3); // 20
+```
+
+</details>
+
+<br>[⬆ Back to top](#table-of-contents)
+
+### memoize
+
+Memoization of a function results in memory.
+
+```php
+function memoize($func)
+{
+    return function () use ($func) {
+        static $cache = [];
+
+        $args = func_get_args();
+        $key = serialize($args);
+        $cached = true;
+
+        if (!isset($cache[$key])) {
+            $cache[$key] = call_user_func_array($func, $args);
+            $cached = false;
+        }
+
+        return ['result' => $cache[$key], 'cached' => $cached];
+    };
+}
+```
+
+<details>
+<summary>Examples</summary>
+
+```php
+$memoizedAdd = memoize(
+    function ($num) {
+        return $num + 10;
+    }
+);
+
+var_dump($memoizedAdd(5)); // ['result' => 15, 'cached' => false]
+var_dump($memoizedAdd(6)); // ['result' => 16, 'cached' => false]
+var_dump($memoizedAdd(5)); // ['result' => 15, 'cached' => true]
+```
+
+</details>
+
+<br>[⬆ Back to top](#table-of-contents)
+
+### curry
+
+Curries a function to take arguments in multiple calls.
+
+```php
+function curry($function)
+{
+    $accumulator = function ($arguments) use ($function, &$accumulator) {
+        return function (...$args) use ($function, $arguments, $accumulator) {
+            $arguments = array_merge($arguments, $args);
+            $reflection = new ReflectionFunction($function);
+            $totalArguments = $reflection->getNumberOfRequiredParameters();
+
+            if ($totalArguments <= count($arguments)) {
+                return call_user_func_array($function, $arguments);
+            }
+
+            return $accumulator($arguments);
+        };
+    };
+
+    return $accumulator([]);
+}
+```
+
+<details>
+<summary>Examples</summary>
+
+```php
+$curriedAdd = curry(
+    function ($a, $b) {
+        return $a + $b;
+    }
+);
+
+$add10 = $curriedAdd(10);
+var_dump($add10(15)); // 25
+```
+
+</details>
+
+<br>[⬆ Back to top](#table-of-contents)
+
+### once
+
+Call a function only once.
+
+```php
+function once($function)
+{
+    return function (...$args) use ($function) {
+        static $called = false;
+        if ($called) {
+            return;
+        }
+        $called = true;
+        return call_user_func_array($function, $args);
+    };
+}
+```
+
+<details>
+<summary>Examples</summary>
+
+```php
+$add = function ($a, $b) {
+    return $a + $b;
+};
+
+$once = once($add);
+
+var_dump($once(10, 5)); // 15
+var_dump($once(20, 10)); // null
+```
+
+</details>
+
+<br>[⬆ Back to top](#table-of-contents)
 
 ## Contribute
 You're always welcome to contribute to this project. Please read the [contribution guide](CONTRIBUTING.md).
